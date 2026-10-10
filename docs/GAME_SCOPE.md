@@ -85,11 +85,13 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - Pipeline de build automatizado (Windows .exe, Android .apk/.aab; iOS requer macOS/Xcode — avaliar CI com runner macOS).
 
 **Fase 1 — MVP de simulação (4–6 semanas)**
-- Zoneamento R/C/I, crescimento básico de lotes.
-- Energia e água como pré-requisito de crescimento.
-- Orçamento simples (impostos + manutenção) com condição de derrota por déficit.
-- Malha viária básica (ruas) conectando zonas a serviços.
-- Save/load.
+- [x] Zoneamento R/C/I, crescimento básico de lotes.
+- [x] Energia e água como pré-requisito de crescimento (flood-fill simplificado; linhas/canos reais ficam para a Fase 2).
+- [x] Orçamento simples (impostos + manutenção) com condição de derrota por déficit.
+- [x] Malha viária básica (ruas) conectando zonas a serviços (checagem de adjacência; pathfinding/tráfego real também fica para a Fase 2).
+- [x] Save/load (JSON próprio em `user://saves/`).
+- [ ] **Pendente:** validar tudo isso abrindo o projeto no Godot Editor (não há binário do Godot no ambiente de nuvem usado para escrever o código) — ver `game/README.md`.
+- [ ] **Pendente:** UI de ferramentas de construção (hoje é só clique + hotkeys de demonstração).
 
 **Fase 2 — Profundidade de simulação (6–8 semanas)**
 - Serviços (polícia/bombeiros/saúde/educação) com raio de cobertura.

@@ -10,23 +10,58 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 3. Rode a cena principal (`scenes/Main.tscn`) com F5/F6.
 
 > **Nota:** este esqueleto foi criado em um ambiente de nuvem sem o binário
-> do Godot instalado, então ainda **não foi aberto/executado** pelo Claude.
-> A primeira verificação (abrir no editor, rodar a cena, confirmar que o
-> grid renderiza e responde a clique/drag/zoom) precisa ser feita
-> localmente antes de seguir para a Fase 1.
+> do Godot instalado, então ainda **não foi aberto/executado** pelo Claude —
+> todo o GDScript abaixo foi escrito e revisado manualmente, sem rodar no
+> editor. A primeira verificação (abrir no editor, rodar a cena, confirmar
+> que o grid renderiza, cresce e responde aos controles) precisa ser feita
+> localmente antes de seguir para a Fase 2.
 
-## O que já funciona (Fase 0)
+## O que já funciona
 
+**Fase 0 — fundação**
 - `core/grid/` — `Tile` e `CityGrid`: grid puro, sem dependência de `Node`,
   testável isoladamente.
-- `scenes/Main.tscn` + `scripts/main.gd` — desenha o grid e permite zonear
-  células como Residencial com clique esquerdo (botão direito desfaz).
 - `scripts/camera.gd` — pan (arrastar com o botão do meio ou toque) e zoom
   (scroll, pinça/gesto de magnificação em trackpad/touch).
 
+**Fase 1 — MVP de simulação**
+- `core/utilities/utility_network.gd` — energia e água se propagam por
+  flood-fill a partir de usinas/estações, sem atravessar água (ainda sem
+  linhas/canos — isso é simplificação deliberada da Fase 1).
+- `core/simulation/rci_demand.gd` — fórmula própria (não é a do jogo
+  original) de demanda Residencial/Comercial/Industrial a partir de
+  população e empregos.
+- `core/simulation/city_simulation.gd` — orquestra um "tick" (1 mês):
+  atualiza utilidades, calcula demanda, cresce/encolhe zonas servidas e
+  conectadas a uma rua, roda o orçamento.
+- `core/economy/budget.gd` — receita de impostos por população/empregos
+  menos manutenção de ruas e edifícios especiais; derrota por déficit
+  (`BANKRUPTCY_THRESHOLD`).
+- `core/save/save_game.gd` — save/load em JSON próprio, gravado em
+  `user://saves/` (caminho correto e gravável em Windows/Android/iOS).
+- `scenes/Main.tscn` + `scripts/main.gd` — cena de demonstração: desenha o
+  grid, roda a simulação a cada 2s (1 "mês"), e mostra HUD com mês, caixa e
+  demanda.
+
+### Controles da cena de demonstração
+
+| Ação | Controle |
+|---|---|
+| Zonear Residencial | clique esquerdo |
+| Demolir (zona + edifício especial) | clique direito |
+| Zonear Residencial/Comercial/Industrial/Rua | teclas `1` `2` `3` `4` (no tile sob o mouse) |
+| Colocar usina de energia | tecla `P` |
+| Colocar estação de água | tecla `U` |
+| Salvar / Carregar | `F5` / `F9` |
+| Pan / Zoom da câmera | arrastar botão do meio ou toque / scroll ou pinça |
+
+> Isso é uma cena de prova de conceito, não a UI final — ferramentas de
+> construção com toolbar/touch dedicados entram na Fase 1 avançada /
+> Fase 4 (polimento mobile) do roadmap em `docs/GAME_SCOPE.md`.
+
 ## Testes
 
-Os testes em `tests/core/test_city_grid.gd` usam a convenção do addon
+Os testes em `tests/core/` usam a convenção do addon
 [GUT](https://github.com/bitwes/Gut) (não incluído no repositório). Para
 rodá-los:
 

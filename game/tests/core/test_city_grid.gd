@@ -27,6 +27,27 @@ func test_set_zone_on_water_fails() -> void:
 	var ok := grid.set_zone(2, 2, Tile.ZoneType.COMMERCIAL)
 	assert_false(ok)
 
+func test_rezoning_resets_growth() -> void:
+	var grid := CityGrid.new(2, 2)
+	grid.set_zone(0, 0, Tile.ZoneType.RESIDENTIAL)
+	grid.get_tile(0, 0).grow()
+	grid.set_zone(0, 0, Tile.ZoneType.COMMERCIAL)
+	assert_eq(grid.get_tile(0, 0).growth_stage, 0)
+
+func test_bulldoze_clears_zone_and_special() -> void:
+	var grid := CityGrid.new(2, 2)
+	grid.place_special(0, 0, Tile.SpecialBuilding.POWER_PLANT)
+	grid.set_zone(0, 0, Tile.ZoneType.RESIDENTIAL)
+	var ok := grid.bulldoze(0, 0)
+	assert_true(ok)
+	assert_eq(grid.get_tile(0, 0).zone, Tile.ZoneType.NONE)
+	assert_eq(grid.get_tile(0, 0).special, Tile.SpecialBuilding.NONE)
+
+func test_bulldoze_cannot_remove_water() -> void:
+	var grid := CityGrid.new(2, 2)
+	grid.get_tile(0, 0).zone = Tile.ZoneType.WATER
+	assert_false(grid.bulldoze(0, 0))
+
 func test_get_neighbors_count_for_corner() -> void:
 	var grid := CityGrid.new(4, 4)
 	var neighbors := grid.get_neighbors(0, 0)
@@ -36,6 +57,13 @@ func test_get_neighbors_count_for_center() -> void:
 	var grid := CityGrid.new(4, 4)
 	var neighbors := grid.get_neighbors(2, 2)
 	assert_eq(neighbors.size(), 4)
+
+func test_has_road_neighbor() -> void:
+	var grid := CityGrid.new(5, 1)
+	grid.set_zone(2, 0, Tile.ZoneType.ROAD)
+	assert_true(grid.has_road_neighbor(1, 0))
+	assert_true(grid.has_road_neighbor(3, 0))
+	assert_false(grid.has_road_neighbor(0, 0))
 
 func test_count_zoned() -> void:
 	var grid := CityGrid.new(3, 3)
