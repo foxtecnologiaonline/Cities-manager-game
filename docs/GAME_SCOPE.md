@@ -55,20 +55,27 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 ```
 /
 ├── docs/                  # este documento e specs futuras
-├── core/                  # simulation core (sem dependência de engine, testável isoladamente)
-│   ├── grid/
-│   ├── economy/
-│   ├── utilities/
-│   ├── traffic/
-│   └── events/            # desastres, ordenanças
-├── game/                  # projeto Godot (render, UI, input)
+├── game/                  # projeto Godot (project.godot na raiz desta pasta)
+│   ├── core/              # simulation core: classes RefCounted puras
+│   │   └── grid/          # (sem extends Node, sem scene tree), testável
+│   │       ├── tile.gd    # isoladamente — mas PRECISA estar dentro de
+│   │       └── city_grid.gd  # res://, pois o Godot só carrega scripts do
+│   │                          # próprio diretório do projeto
 │   ├── scenes/
-│   ├── scripts/
+│   ├── scripts/           # camada de render/input (usa core/ internamente)
 │   ├── assets/            # arte 100% original
-│   └── export_presets.cfg
-├── tests/                 # testes do core (unitários)
+│   ├── tests/             # testes do core (GUT), também dentro de res://
+│   └── export_presets.cfg # gerado localmente, não versionado (.gitignore)
 └── tools/                 # scripts de build/export (Windows/Android/iOS)
 ```
+
+> **Correção em relação à primeira versão deste documento:** aqui descrevíamos
+> `core/` como pasta-irmã de `game/`, fora do projeto Godot. Na prática o
+> Godot só carrega scripts dentro do diretório do projeto (`res://`), então
+> `core/` foi movido para `game/core/`. "Sem dependência de engine" continua
+> valendo no sentido que importa: são classes `RefCounted`, sem `extends Node`
+> nem acesso à scene tree, então são testáveis isoladamente (via GUT) mesmo
+> morando dentro da pasta do projeto.
 
 ## 5. Roadmap faseado
 

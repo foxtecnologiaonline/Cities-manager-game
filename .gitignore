@@ -1,0 +1,15 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/ios/
+export_presets.cfg
+*.translation
+
+# Godot import cache (older format, kept for safety)
+.import/
+export.cfg
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
