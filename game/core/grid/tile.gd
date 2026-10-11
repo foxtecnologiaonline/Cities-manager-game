@@ -27,6 +27,8 @@ enum SpecialBuilding {
 	FIRE_STATION,
 	HOSPITAL,
 	SCHOOL,
+	AIRPORT,
+	SEAPORT,
 }
 
 const MAX_GROWTH_STAGE := 4

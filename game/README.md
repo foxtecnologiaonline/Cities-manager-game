@@ -14,7 +14,7 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 > todo o GDScript abaixo foi escrito e revisado manualmente, sem rodar no
 > editor. A primeira verificação (abrir no editor, rodar a cena, confirmar
 > que o grid renderiza, cresce e responde aos controles) precisa ser feita
-> localmente antes de seguir para a Fase 3.
+> localmente antes de seguir para a Fase 4.
 
 ## O que já funciona
 
@@ -66,6 +66,28 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 - Overlays de dados na cena de demonstração (tecla `TAB`): Zonas → Valor do
   terreno → Poluição → Criminalidade → Tráfego.
 
+**Fase 3 — conteúdo e eventos**
+- `core/events/disaster_manager.gd` — incêndio, enchente, tornado e
+  terremoto (conjunto genérico do gênero, textos/números próprios).
+  Dispara aleatoriamente por mês (configurável/desligável) ou manualmente.
+  A **enchente usa a elevação do terreno** da Fase 2 como defesa real: só
+  destrói tiles baixos perto de água — primeiro uso de `elevation` no
+  jogo.
+- `core/economy/ordinance_manager.gd` — 4 ordenanças municipais (Patrulha
+  Extra, Reciclagem, Imposto Turístico, Educação Gratuita), cada uma com
+  custo mensal e efeito próprio sobre cobertura policial, poluição ou
+  receita.
+- `core/milestones/population_milestones.gd` — aeroporto e porto como
+  edifícios especiais liberados por marco de população (porto também
+  exige adjacência a água).
+- `core/news/news_feed.gd` — jornal/log de eventos (desastres, marcos
+  atingidos), mostrado no HUD da cena de demonstração.
+- `education_coverage` (calculado desde a Fase 2 mas não usado até aqui)
+  passou a reduzir criminalidade em `crime_calculator.gd`.
+- `core/save/save_game.gd` — formato v2: agora inclui ordenanças, estado
+  de desastres e jornal; saves v1 continuam carregando (campos novos
+  usam valores padrão).
+
 ### Controles da cena de demonstração
 
 | Ação | Controle |
@@ -75,8 +97,12 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 | Zonear Residencial/Comercial/Industrial/Rua/Rodovia/Trilho/Metrô | teclas `1`–`7` (no tile sob o mouse) |
 | Colocar usina de energia / estação de água | `P` / `U` |
 | Colocar polícia / bombeiros / hospital / escola | `K` / `F` / `H` / `O` |
+| Colocar aeroporto / porto (exige marco de população) | `A` / `E` |
 | Criar ou remover água (terraformação) | `8` |
 | Subir / descer elevação | `9` / `0` |
+| Ligar/desligar ordenança (Patrulha/Reciclagem/Turismo/Educação) | `Ctrl` + `1`–`4` |
+| Ligar/desligar desastres aleatórios | `N` |
+| Disparar um desastre aleatório agora | `M` |
 | Alternar overlay de dados | `TAB` |
 | Salvar / Carregar | `F5` / `F9` |
 | Pan / Zoom da câmera | arrastar botão do meio ou toque / scroll ou pinça |

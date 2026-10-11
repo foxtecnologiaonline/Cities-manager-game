@@ -105,10 +105,15 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [ ] **Pendente:** validar no Godot Editor (mesma ressalva da Fase 1 — ver `game/README.md`).
 
 **Fase 3 — Conteúdo e eventos (4–6 semanas)**
-- Desastres configuráveis.
-- Ordenanças municipais.
-- Edifícios especiais (aeroporto, porto, marcos de população).
-- Jornal/painel de eventos narrando a cidade.
+- [x] Desastres configuráveis (`core/events/disaster_manager.gd`): incêndio, enchente, tornado, terremoto — conjunto genérico do gênero, textos e números próprios. Ligar/desligar e disparo manual disponíveis na cena de demonstração.
+- [x] Enchente usa a elevação do terreno (Fase 2) como defesa real: só destrói tiles baixos próximos de água — isso fecha a pendência "elevação não afeta nada" da Fase 2.
+- [x] Ordenanças municipais (`core/economy/ordinance_manager.gd`): Patrulha Extra, Reciclagem, Imposto Turístico, Educação Gratuita — cada uma com custo/efeito próprio sobre cobertura policial, poluição ou receita.
+- [x] `education_coverage` (calculado desde a Fase 2, mas não usado até agora) passou a reduzir criminalidade — fechando outra pendência.
+- [x] Edifícios especiais por marco de população (`core/milestones/population_milestones.gd`): aeroporto (população total) e porto (população + adjacência a água).
+- [x] Jornal de eventos (`core/news/news_feed.gd`): log limitado dos últimos eventos (desastres, marcos atingidos), exibido no HUD da cena de demonstração.
+- [x] Save/load (v2) estendido para incluir ordenanças, estado de desastres e jornal; saves v1 (Fase 1) continuam carregando.
+- [ ] **Pendente:** validar no Godot Editor (mesma ressalva das fases anteriores — ver `game/README.md`).
+- [ ] **Pendente:** flag de "marco já anunciado" não é persistida no save — depois de carregar um save, um marco já atingido pode ser anunciado de novo no jornal (bug cosmético conhecido, não afeta a simulação).
 
 **Fase 4 — Polimento multiplataforma (contínuo)**
 - UI touch dedicada para mobile, testes em dispositivos reais.

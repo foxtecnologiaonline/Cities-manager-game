@@ -5,15 +5,18 @@ extends RefCounted
 ## writable, per-user location on Windows, Android and iOS alike.
 
 const SAVE_DIR := "user://saves"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2 ## v1: grid+budget only. v2: + ordinances/disasters/news.
 
-static func save_slot(slot: String, grid: CityGrid, budget: Budget, tick_count: int) -> bool:
+static func save_slot(slot: String, sim: CitySimulation) -> bool:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 	var data := {
 		"version": SAVE_VERSION,
-		"tick_count": tick_count,
-		"grid": grid.to_dict(),
-		"budget": budget.to_dict(),
+		"tick_count": sim.tick_count,
+		"grid": sim.grid.to_dict(),
+		"budget": sim.budget.to_dict(),
+		"ordinances": sim.ordinances.to_dict(),
+		"disasters_enabled": sim.disasters.enabled,
+		"news": sim.news.to_dict(),
 	}
 	var path := "%s/%s.json" % [SAVE_DIR, slot]
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -23,29 +26,36 @@ static func save_slot(slot: String, grid: CityGrid, budget: Budget, tick_count: 
 	file.close()
 	return true
 
-## Returns {} if the slot doesn't exist or is corrupt/unversioned; callers
-## should treat an empty dict as "nothing to load".
-static func load_slot(slot: String) -> Dictionary:
+## Returns null if the slot doesn't exist, is corrupt, or was written by a
+## newer save format than this code knows about. A save from an older
+## version still loads: fields added since then just fall back to their
+## defaults via .get() in each from_dict().
+static func load_slot(slot: String) -> CitySimulation:
 	var path := "%s/%s.json" % [SAVE_DIR, slot]
 	if not FileAccess.file_exists(path):
-		return {}
+		return null
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		return {}
+		return null
 	var text := file.get_as_text()
 	file.close()
 
 	var parsed = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
+		return null
 	var result: Dictionary = parsed
-	if int(result.get("version", -1)) != SAVE_VERSION:
-		return {}
+	var saved_version := int(result.get("version", -1))
+	if saved_version < 0 or saved_version > SAVE_VERSION:
+		return null
 
 	var budget := Budget.new()
 	budget.from_dict(result["budget"])
-	return {
-		"grid": CityGrid.from_dict(result["grid"]),
-		"budget": budget,
-		"tick_count": int(result.get("tick_count", 0)),
-	}
+	var ordinances := OrdinanceManager.new()
+	ordinances.from_dict(result.get("ordinances", {}))
+	var news := NewsFeed.new()
+	news.from_dict(result.get("news", {}))
+
+	var sim := CitySimulation.new(CityGrid.from_dict(result["grid"]), budget, ordinances, null, news)
+	sim.tick_count = int(result.get("tick_count", 0))
+	sim.disasters.enabled = bool(result.get("disasters_enabled", true))
+	return sim

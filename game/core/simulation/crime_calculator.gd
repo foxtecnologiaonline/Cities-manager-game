@@ -1,11 +1,13 @@
 class_name CrimeCalculator
 extends RefCounted
 ## Original formula: crime risk grows with how crowded and polluted a tile
-## is, and is suppressed by police coverage. Must run after
-## PollutionCalculator and ServiceCoverage in the same tick.
+## is, and is suppressed by police coverage and (to a lesser extent)
+## education coverage. Must run after PollutionCalculator and
+## ServiceCoverage in the same tick.
 
 const BASE_CRIME_PER_CAPITA := 0.02
 const POLLUTION_CRIME_FACTOR := 0.3
+const EDUCATION_CRIME_FACTOR := 0.3
 const MAX_CRIME := 10.0
 
 static func update_all(grid: CityGrid) -> void:
@@ -16,4 +18,5 @@ static func update_all(grid: CityGrid) -> void:
 		var risk: float = tile.population * BASE_CRIME_PER_CAPITA
 		risk += tile.pollution * POLLUTION_CRIME_FACTOR
 		risk *= 1.0 - tile.police_coverage
+		risk *= 1.0 - EDUCATION_CRIME_FACTOR * tile.education_coverage
 		tile.crime = clamp(risk, 0.0, MAX_CRIME)

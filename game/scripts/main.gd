@@ -1,5 +1,5 @@
 extends Node2D
-## Fase 1 + Fase 2 smoke-test scene: renders the grid (zones or a data
+## Fase 1 + 2 + 3 smoke-test scene: renders the grid (zones or a data
 ## overlay) and runs the simulation loop so the systems in core/ can be
 ## seen working end to end. Dedicated build-tool UI comes in a later pass;
 ## for now, zoning/placing is driven directly by mouse + keyboard.
@@ -112,6 +112,10 @@ func _color_for_special(special: int) -> Color:
 			return Color(0.95, 0.95, 0.95)
 		Tile.SpecialBuilding.SCHOOL:
 			return Color(0.9, 0.6, 0.1)
+		Tile.SpecialBuilding.AIRPORT:
+			return Color(0.6, 0.6, 0.65)
+		Tile.SpecialBuilding.SEAPORT:
+			return Color(0.1, 0.45, 0.55)
 		_:
 			return Color(0.3, 0.3, 0.3)
 
@@ -135,14 +139,22 @@ func _handle_click(event: InputEventMouseButton) -> void:
 	if changed:
 		queue_redraw()
 
-## Demo-only hotkeys (apply at the tile under the mouse cursor):
+## Demo-only hotkeys (apply at the tile under the mouse cursor unless noted):
 ##   1/2/3/4/5/6/7 = Residencial / Comercial / Industrial / Rua / Rodovia / Trilho / Metro
 ##   P/U/K/F/H/O   = usina / agua / policia / bombeiros / hospital / escola
+##   A/E           = aeroporto / porto (exigem marco de populacao)
 ##   8             = alterna agua (terraformacao)
 ##   9/0           = sobe / desce elevacao
+##   Ctrl+1..4     = alterna ordenanca (patrulha / reciclagem / turismo / educacao)
+##   N             = liga/desliga desastres aleatorios
+##   M             = dispara um desastre aleatorio agora (ignora o toggle N)
 ##   TAB           = alterna overlay de dados
 ##   F5/F9         = salvar / carregar
 func _handle_key(event: InputEventKey) -> void:
+	if event.ctrl_pressed:
+		_handle_ordinance_toggle(event.keycode)
+		return
+
 	var cell := _tile_under_mouse()
 	match event.keycode:
 		KEY_1:
@@ -171,6 +183,12 @@ func _handle_key(event: InputEventKey) -> void:
 			grid.place_special(cell.x, cell.y, Tile.SpecialBuilding.HOSPITAL)
 		KEY_O:
 			grid.place_special(cell.x, cell.y, Tile.SpecialBuilding.SCHOOL)
+		KEY_A:
+			if PopulationMilestones.can_place_airport(grid, cell.x, cell.y):
+				grid.place_special(cell.x, cell.y, Tile.SpecialBuilding.AIRPORT)
+		KEY_E:
+			if PopulationMilestones.can_place_seaport(grid, cell.x, cell.y):
+				grid.place_special(cell.x, cell.y, Tile.SpecialBuilding.SEAPORT)
 		KEY_8:
 			var tile := grid.get_tile(cell.x, cell.y)
 			if tile != null:
@@ -179,10 +197,14 @@ func _handle_key(event: InputEventKey) -> void:
 			grid.raise_elevation(cell.x, cell.y)
 		KEY_0:
 			grid.lower_elevation(cell.x, cell.y)
+		KEY_N:
+			simulation.disasters.enabled = not simulation.disasters.enabled
+		KEY_M:
+			simulation.disasters.trigger(randi() % 4, grid, simulation.news, simulation.tick_count)
 		KEY_TAB:
 			_overlay_mode = (_overlay_mode + 1) % OVERLAY_COUNT
 		KEY_F5:
-			SaveGame.save_slot(SAVE_SLOT, grid, budget, simulation.tick_count)
+			SaveGame.save_slot(SAVE_SLOT, simulation)
 		KEY_F9:
 			_load_game()
 		_:
@@ -190,14 +212,31 @@ func _handle_key(event: InputEventKey) -> void:
 	queue_redraw()
 	_update_hud()
 
+func _handle_ordinance_toggle(keycode: int) -> void:
+	var ordinance := -1
+	match keycode:
+		KEY_1:
+			ordinance = OrdinanceManager.Ordinance.EXTRA_PATROL
+		KEY_2:
+			ordinance = OrdinanceManager.Ordinance.RECYCLING_PROGRAM
+		KEY_3:
+			ordinance = OrdinanceManager.Ordinance.TOURISM_TAX
+		KEY_4:
+			ordinance = OrdinanceManager.Ordinance.FREE_EDUCATION
+		_:
+			return
+	var ordinances := simulation.ordinances
+	ordinances.set_active(ordinance, not ordinances.is_active(ordinance))
+	queue_redraw()
+	_update_hud()
+
 func _load_game() -> void:
-	var data := SaveGame.load_slot(SAVE_SLOT)
-	if data.is_empty():
+	var sim := SaveGame.load_slot(SAVE_SLOT)
+	if sim == null:
 		return
-	grid = data["grid"]
-	budget = data["budget"]
-	simulation = CitySimulation.new(grid, budget)
-	simulation.tick_count = data["tick_count"]
+	grid = sim.grid
+	budget = sim.budget
+	simulation = sim
 	_game_over = false
 
 func _update_hud() -> void:
@@ -207,10 +246,27 @@ func _update_hud() -> void:
 	if simulation.last_demand != null:
 		var demand := simulation.last_demand
 		demand_text = "R %.0f / C %.0f / I %.0f" % [demand.residential, demand.commercial, demand.industrial]
-	hud_label.text = "Mes %d | Caixa: %.0f | Demanda %s | Overlay: %s%s" % [
+
+	var latest_news := "-"
+	var recent := simulation.news.latest(1)
+	if not recent.is_empty():
+		latest_news = str(recent[0]["text"])
+
+	var active_ordinances: Array[String] = []
+	for ordinance_id in OrdinanceManager.ORDINANCE_NAMES.size():
+		if simulation.ordinances.is_active(ordinance_id):
+			active_ordinances.append(OrdinanceManager.ORDINANCE_NAMES[ordinance_id])
+	var ordinances_text := "nenhuma"
+	if not active_ordinances.is_empty():
+		ordinances_text = ", ".join(PackedStringArray(active_ordinances))
+
+	hud_label.text = "Mes %d | Caixa: %.0f | Demanda %s | Overlay: %s%s\n%s\nOrdenancas: %s | Desastres: %s" % [
 		simulation.tick_count,
 		budget.treasury,
 		demand_text,
 		OVERLAY_NAMES[_overlay_mode],
 		" | FALIDO" if _game_over else "",
+		latest_news,
+		ordinances_text,
+		"ON" if simulation.disasters.enabled else "OFF",
 	]

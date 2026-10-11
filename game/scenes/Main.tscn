@@ -16,5 +16,5 @@ script = ExtResource("2")
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 760.0
-offset_bottom = 40.0
+offset_bottom = 100.0
 text = "Mes 0 | Caixa: 10000"
