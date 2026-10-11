@@ -14,7 +14,7 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 > todo o GDScript abaixo foi escrito e revisado manualmente, sem rodar no
 > editor. A primeira verificação (abrir no editor, rodar a cena, confirmar
 > que o grid renderiza, cresce e responde aos controles) precisa ser feita
-> localmente antes de seguir para a Fase 2.
+> localmente antes de seguir para a Fase 3.
 
 ## O que já funciona
 
@@ -43,15 +43,41 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
   grid, roda a simulação a cada 2s (1 "mês"), e mostra HUD com mês, caixa e
   demanda.
 
+**Fase 2 — profundidade de simulação**
+- `core/services/service_coverage.gd` — polícia/bombeiros/saúde/educação
+  projetam um raio de cobertura (mecânica clássica do gênero, com nossos
+  próprios números) sobre `police_coverage`/`fire_coverage`/
+  `health_coverage`/`education_coverage` em cada tile.
+- `core/simulation/pollution_calculator.gd` — industrial com crescimento
+  emite poluição com queda por distância, acumulando entre poluidores.
+- `core/simulation/crime_calculator.gd` — criminalidade cresce com
+  densidade populacional e poluição, e é suprimida pela cobertura policial.
+- `core/simulation/land_value_calculator.gd` — valor do terreno real:
+  bônus por água/polícia/saúde, penalidade por poluição/criminalidade.
+  **Já realimenta o crescimento:** zonas com valor do terreno baixo
+  encolhem mesmo com demanda positiva (`CitySimulation.MIN_DESIRABLE_LAND_VALUE`).
+- `core/simulation/traffic_estimator.gd` — **heurística**, não é
+  simulação de tráfego real: estima carga de cada tile de transporte pela
+  soma de população+empregos dos vizinhos diretos. Pathfinding/roteamento
+  de verdade fica para uma passada futura.
+- Novos tipos de zona `HIGHWAY`/`RAIL`/`SUBWAY` (todos contam como acesso a
+  transporte para crescimento) e terraformação básica
+  (`CityGrid.terraform_set_water`, `raise_elevation`, `lower_elevation`).
+- Overlays de dados na cena de demonstração (tecla `TAB`): Zonas → Valor do
+  terreno → Poluição → Criminalidade → Tráfego.
+
 ### Controles da cena de demonstração
 
 | Ação | Controle |
 |---|---|
 | Zonear Residencial | clique esquerdo |
 | Demolir (zona + edifício especial) | clique direito |
-| Zonear Residencial/Comercial/Industrial/Rua | teclas `1` `2` `3` `4` (no tile sob o mouse) |
-| Colocar usina de energia | tecla `P` |
-| Colocar estação de água | tecla `U` |
+| Zonear Residencial/Comercial/Industrial/Rua/Rodovia/Trilho/Metrô | teclas `1`–`7` (no tile sob o mouse) |
+| Colocar usina de energia / estação de água | `P` / `U` |
+| Colocar polícia / bombeiros / hospital / escola | `K` / `F` / `H` / `O` |
+| Criar ou remover água (terraformação) | `8` |
+| Subir / descer elevação | `9` / `0` |
+| Alternar overlay de dados | `TAB` |
 | Salvar / Carregar | `F5` / `F9` |
 | Pan / Zoom da câmera | arrastar botão do meio ou toque / scroll ou pinça |
 

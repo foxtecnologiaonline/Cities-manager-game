@@ -58,12 +58,32 @@ func test_get_neighbors_count_for_center() -> void:
 	var neighbors := grid.get_neighbors(2, 2)
 	assert_eq(neighbors.size(), 4)
 
-func test_has_road_neighbor() -> void:
+func test_has_transit_access_via_road() -> void:
 	var grid := CityGrid.new(5, 1)
 	grid.set_zone(2, 0, Tile.ZoneType.ROAD)
-	assert_true(grid.has_road_neighbor(1, 0))
-	assert_true(grid.has_road_neighbor(3, 0))
-	assert_false(grid.has_road_neighbor(0, 0))
+	assert_true(grid.has_transit_access(1, 0))
+	assert_true(grid.has_transit_access(3, 0))
+	assert_false(grid.has_transit_access(0, 0))
+
+func test_has_transit_access_via_highway_rail_or_subway() -> void:
+	var grid := CityGrid.new(3, 1)
+	for zone in [Tile.ZoneType.HIGHWAY, Tile.ZoneType.RAIL, Tile.ZoneType.SUBWAY]:
+		grid.set_zone(1, 0, zone)
+		assert_true(grid.has_transit_access(0, 0), "zone %d should grant transit access" % zone)
+
+func test_terraform_set_water_creates_and_removes_water() -> void:
+	var grid := CityGrid.new(2, 2)
+	assert_true(grid.terraform_set_water(0, 0, true))
+	assert_eq(grid.get_tile(0, 0).zone, Tile.ZoneType.WATER)
+	assert_true(grid.terraform_set_water(0, 0, false))
+	assert_eq(grid.get_tile(0, 0).zone, Tile.ZoneType.NONE)
+
+func test_raise_and_lower_elevation() -> void:
+	var grid := CityGrid.new(1, 1)
+	grid.raise_elevation(0, 0, 3)
+	assert_eq(grid.get_tile(0, 0).elevation, 3)
+	grid.lower_elevation(0, 0, 5)
+	assert_eq(grid.get_tile(0, 0).elevation, 0) # floors at zero, never negative
 
 func test_count_zoned() -> void:
 	var grid := CityGrid.new(3, 3)

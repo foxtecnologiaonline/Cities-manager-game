@@ -42,8 +42,8 @@ func set_zone(x: int, y: int, zone: int) -> bool:
 	tile.zone = zone
 	return true
 
-## Clears zoning and any special building on a tile. Water tiles are
-## permanent terrain in Fase 1 (no terraforming yet) and can't be bulldozed.
+## Clears zoning and any special building on a tile. Water is terrain, not
+## something you zone — use terraform_set_water to remove it instead.
 func bulldoze(x: int, y: int) -> bool:
 	var tile := get_tile(x, y)
 	if tile == null or tile.zone == Tile.ZoneType.WATER:
@@ -60,11 +60,48 @@ func place_special(x: int, y: int, special: int) -> bool:
 	tile.special = special
 	return true
 
-func has_road_neighbor(x: int, y: int) -> bool:
+const _TRANSIT_ZONES := [Tile.ZoneType.ROAD, Tile.ZoneType.HIGHWAY, Tile.ZoneType.RAIL, Tile.ZoneType.SUBWAY]
+
+static func is_transit_zone(zone: int) -> bool:
+	return zone in _TRANSIT_ZONES
+
+## True if any orthogonal neighbor is a road, highway, rail or subway tile —
+## Fase 1/2's stand-in for "connected to the transport network" (no real
+## pathfinding/routing yet, see TrafficEstimator).
+func has_transit_access(x: int, y: int) -> bool:
 	for tile in get_neighbors(x, y):
-		if tile.zone == Tile.ZoneType.ROAD:
+		if is_transit_zone(tile.zone):
 			return true
 	return false
+
+## Converts a tile to/from water. Separate from set_zone/bulldoze on
+## purpose: those two treat water as permanent terrain, but the
+## terraforming tool is explicitly allowed to create or remove it.
+func terraform_set_water(x: int, y: int, is_water: bool) -> bool:
+	var tile := get_tile(x, y)
+	if tile == null:
+		return false
+	if is_water:
+		tile.reset_growth()
+		tile.zone = Tile.ZoneType.WATER
+		tile.special = Tile.SpecialBuilding.NONE
+	elif tile.zone == Tile.ZoneType.WATER:
+		tile.zone = Tile.ZoneType.NONE
+	return true
+
+func raise_elevation(x: int, y: int, amount: int = 1) -> bool:
+	var tile := get_tile(x, y)
+	if tile == null:
+		return false
+	tile.elevation += amount
+	return true
+
+func lower_elevation(x: int, y: int, amount: int = 1) -> bool:
+	var tile := get_tile(x, y)
+	if tile == null:
+		return false
+	tile.elevation = max(0, tile.elevation - amount)
+	return true
 
 ## 4-directional (von Neumann) neighbors, clipped to the grid bounds.
 func get_neighbors(x: int, y: int) -> Array[Tile]:

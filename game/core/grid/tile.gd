@@ -3,6 +3,9 @@ extends RefCounted
 ## Single cell of the city grid. Engine-light on purpose: no Node/scene-tree
 ## dependency, so this logic is unit-testable and portable.
 
+## Append-only: existing save files store these as raw ints, so inserting
+## a value in the middle (instead of at the end) would silently corrupt
+## every save made before the change.
 enum ZoneType {
 	NONE,
 	RESIDENTIAL,
@@ -10,12 +13,20 @@ enum ZoneType {
 	INDUSTRIAL,
 	ROAD,
 	WATER,
+	HIGHWAY,
+	RAIL,
+	SUBWAY,
 }
 
+## Append-only, same reason as ZoneType.
 enum SpecialBuilding {
 	NONE,
 	POWER_PLANT,
 	WATER_PUMP,
+	POLICE_STATION,
+	FIRE_STATION,
+	HOSPITAL,
+	SCHOOL,
 }
 
 const MAX_GROWTH_STAGE := 4
@@ -32,6 +43,12 @@ var has_power: bool = false
 var has_water_supply: bool = false
 var land_value: float = 0.0
 var pollution: float = 0.0
+var crime: float = 0.0
+var traffic: float = 0.0
+var police_coverage: float = 0.0
+var fire_coverage: float = 0.0
+var health_coverage: float = 0.0
+var education_coverage: float = 0.0
 var growth_stage: int = 0
 var population: int = 0
 var jobs: int = 0
@@ -98,13 +115,21 @@ func to_dict() -> Dictionary:
 		"has_water_supply": has_water_supply,
 		"land_value": land_value,
 		"pollution": pollution,
+		"crime": crime,
+		"traffic": traffic,
+		"police_coverage": police_coverage,
+		"fire_coverage": fire_coverage,
+		"health_coverage": health_coverage,
+		"education_coverage": education_coverage,
 		"growth_stage": growth_stage,
 		"population": population,
 		"jobs": jobs,
 	}
 
 ## JSON round-trips every number as float, so ints are cast back explicitly
-## to satisfy GDScript's static typing on assignment.
+## to satisfy GDScript's static typing on assignment. Fields missing from
+## an older save (anything added after that save was written) fall back to
+## their defaults via .get(), so old saves keep loading.
 func from_dict(data: Dictionary) -> void:
 	zone = int(data.get("zone", ZoneType.NONE))
 	special = int(data.get("special", SpecialBuilding.NONE))
@@ -113,6 +138,12 @@ func from_dict(data: Dictionary) -> void:
 	has_water_supply = bool(data.get("has_water_supply", false))
 	land_value = float(data.get("land_value", 0.0))
 	pollution = float(data.get("pollution", 0.0))
+	crime = float(data.get("crime", 0.0))
+	traffic = float(data.get("traffic", 0.0))
+	police_coverage = float(data.get("police_coverage", 0.0))
+	fire_coverage = float(data.get("fire_coverage", 0.0))
+	health_coverage = float(data.get("health_coverage", 0.0))
+	education_coverage = float(data.get("education_coverage", 0.0))
 	growth_stage = int(data.get("growth_stage", 0))
 	population = int(data.get("population", 0))
 	jobs = int(data.get("jobs", 0))

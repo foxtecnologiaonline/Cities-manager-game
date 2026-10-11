@@ -94,10 +94,15 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [ ] **Pendente:** UI de ferramentas de construção (hoje é só clique + hotkeys de demonstração).
 
 **Fase 2 — Profundidade de simulação (6–8 semanas)**
-- Serviços (polícia/bombeiros/saúde/educação) com raio de cobertura.
-- Valor do terreno + overlays de dados (poluição, criminalidade, tráfego).
-- Transporte avançado (rodovias, trilhos, metrô) com simulação de tráfego.
-- Terraformação.
+- [x] Serviços (polícia/bombeiros/saúde/educação) com raio de cobertura (`core/services/service_coverage.gd`).
+- [x] Poluição (`core/simulation/pollution_calculator.gd`) e criminalidade (`core/simulation/crime_calculator.gd`), cada um com fórmula própria.
+- [x] Valor do terreno real (`core/simulation/land_value_calculator.gd`), já realimentando o crescimento: zonas com valor do terreno abaixo de um limiar encolhem mesmo com demanda positiva.
+- [x] Overlays de dados na cena de demonstração (valor do terreno, poluição, criminalidade, tráfego — tecla `TAB`).
+- [x] Novos tipos de zona de transporte (rodovia/trilho/metrô) contando como acesso a transporte para crescimento.
+- [x] Terraformação básica: criar/remover água e subir/baixar elevação (`CityGrid.terraform_set_water/raise_elevation/lower_elevation`).
+- [ ] **Limitação assumida:** `TrafficEstimator` é uma heurística (carga = população+empregos dos vizinhos diretos de cada tile de transporte), **não** uma simulação de tráfego real com roteamento/pathfinding pela malha — isso continua pendente para uma passada futura caso o projeto precise de congestionamento "de verdade".
+- [ ] **Pendente:** elevação é armazenada mas ainda não afeta nada (vai alimentar enchentes/desastres na Fase 3, ou custo de construção em terreno irregular).
+- [ ] **Pendente:** validar no Godot Editor (mesma ressalva da Fase 1 — ver `game/README.md`).
 
 **Fase 3 — Conteúdo e eventos (4–6 semanas)**
 - Desastres configuráveis.
