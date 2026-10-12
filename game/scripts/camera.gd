@@ -24,7 +24,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			_apply_zoom(zoom_speed)
 	elif event is InputEventMouseMotion and _dragging:
-		var delta := (event.position - _drag_start_mouse) / zoom.x
+		# `is` doesn't narrow event's type here (it's ANDed with another
+		# condition), so cast explicitly instead of relying on inference.
+		var motion := event as InputEventMouseMotion
+		var delta: Vector2 = (motion.position - _drag_start_mouse) / zoom.x
 		position = _drag_start_position - delta
 	elif event is InputEventMagnifyGesture:
 		_apply_zoom(-(event.factor - 1.0))

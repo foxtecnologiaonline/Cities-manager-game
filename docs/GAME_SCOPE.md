@@ -90,8 +90,8 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [x] Orçamento simples (impostos + manutenção) com condição de derrota por déficit.
 - [x] Malha viária básica (ruas) conectando zonas a serviços (checagem de adjacência; pathfinding/tráfego real também fica para a Fase 2).
 - [x] Save/load (JSON próprio em `user://saves/`).
-- [ ] **Pendente:** validar tudo isso abrindo o projeto no Godot Editor (não há binário do Godot no ambiente de nuvem usado para escrever o código) — ver `game/README.md`.
-- [ ] **Pendente:** UI de ferramentas de construção (hoje é só clique + hotkeys de demonstração).
+- [x] **Validado:** Godot 4.6.0 headless + GUT 9.6.1 — ver seção 6.1.
+- [x] UI de ferramentas de construção: toolbar touch (chegou na Fase 4, ver abaixo) substituiu os hotkeys de demonstração.
 
 **Fase 2 — Profundidade de simulação (6–8 semanas)**
 - [x] Serviços (polícia/bombeiros/saúde/educação) com raio de cobertura (`core/services/service_coverage.gd`).
@@ -101,8 +101,8 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [x] Novos tipos de zona de transporte (rodovia/trilho/metrô) contando como acesso a transporte para crescimento.
 - [x] Terraformação básica: criar/remover água e subir/baixar elevação (`CityGrid.terraform_set_water/raise_elevation/lower_elevation`).
 - [ ] **Limitação assumida:** `TrafficEstimator` é uma heurística (carga = população+empregos dos vizinhos diretos de cada tile de transporte), **não** uma simulação de tráfego real com roteamento/pathfinding pela malha — isso continua pendente para uma passada futura caso o projeto precise de congestionamento "de verdade".
-- [ ] **Pendente:** elevação é armazenada mas ainda não afeta nada (vai alimentar enchentes/desastres na Fase 3, ou custo de construção em terreno irregular).
-- [ ] **Pendente:** validar no Godot Editor (mesma ressalva da Fase 1 — ver `game/README.md`).
+- [x] Elevação passou a ter efeito real na Fase 3 (defesa contra enchente) — ver abaixo.
+- [x] **Validado** junto com as demais fases — ver seção 6.1.
 
 **Fase 3 — Conteúdo e eventos (4–6 semanas)**
 - [x] Desastres configuráveis (`core/events/disaster_manager.gd`): incêndio, enchente, tornado, terremoto — conjunto genérico do gênero, textos e números próprios. Ligar/desligar e disparo manual disponíveis na cena de demonstração.
@@ -112,7 +112,7 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [x] Edifícios especiais por marco de população (`core/milestones/population_milestones.gd`): aeroporto (população total) e porto (população + adjacência a água).
 - [x] Jornal de eventos (`core/news/news_feed.gd`): log limitado dos últimos eventos (desastres, marcos atingidos), exibido no HUD da cena de demonstração.
 - [x] Save/load (v2) estendido para incluir ordenanças, estado de desastres e jornal; saves v1 (Fase 1) continuam carregando.
-- [ ] **Pendente:** validar no Godot Editor (mesma ressalva das fases anteriores — ver `game/README.md`).
+- [x] **Validado** junto com as demais fases — ver seção 6.1.
 - [ ] **Pendente:** flag de "marco já anunciado" não é persistida no save — depois de carregar um save, um marco já atingido pode ser anunciado de novo no jornal (bug cosmético conhecido, não afeta a simulação).
 
 **Fase 4 — Polimento multiplataforma (contínuo)**
@@ -121,10 +121,43 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [x] Acessibilidade: paleta dos overlays de dados trocada de verde/vermelho (a pior combinação possível para daltonismo vermelho-verde, a forma mais comum) para azul/âmbar.
 - [x] Localização: esqueleto real com `localization/strings.csv` (chaves = texto em pt-BR, com coluna `en`) e `tr()` nos botões da toolbar — pt-BR funciona imediatamente sem importação (é o texto-chave); inglês requer importar o CSV no Editor e registrá-lo em Project Settings → Localization (passo manual documentado no `game/README.md`, não pode ser feito sem abrir o Editor).
 - [x] Tutorial mínimo: painel de onboarding dispensável (`scripts/tutorial_hint.gd`), não um fluxo multi-etapas.
-- [ ] **Decisão deliberada, não pendência esquecida:** nenhuma otimização de performance (LOD de simulação, pooling de nós) foi feita. Otimizar sem medição é especulação — não há perfil de performance real (nunca foi aberto no Godot) nem dispositivo real testado. Fazer isso sem dados seria código especulativo não verificável.
-- [ ] **Pendente, bloqueado por ambiente:** testes em dispositivos reais — impossível neste container (sem Godot, sem dispositivo).
+- [ ] **Decisão deliberada, não pendência esquecida:** nenhuma otimização de performance (LOD de simulação, pooling de nós) foi feita. Otimizar sem medição é especulação; a validação da seção 6.1 deu um primeiro sinal de performance (rodou vários ticks em ~12s headless sem travar), mas isso não substitui um profiling real em dispositivo.
+- [ ] **Pendente, bloqueado por ambiente:** testes de interação real (clique/toque na janela) e em dispositivos móveis reais — a validação da seção 6.1 foi 100% headless (sem display), então cobre que o código carrega e a simulação roda, mas não cobre "a UI responde certo ao toque".
 - [ ] **Pendente:** textos dinâmicos do HUD (mês/caixa/demanda/jornal) ainda só em pt-BR — só os rótulos da toolbar têm o gancho de tradução por agora.
-- [ ] **Pendente:** validar no Godot Editor — depois de 4 fases de código nunca aberto no editor, esta é a validação mais importante e mais arriscada de todo o projeto (toolbar/UI usa APIs de `Control`/`ButtonGroup`/sinais de `.tscn` que são as mais fáceis de errar sem o editor).
+- [x] **Validado headless** (Godot 4.6.0 + GUT 9.6.1) — ver seção 6.1. Um bug real de Fase 4/anterior foi encontrado e corrigido nessa validação (`camera.gd`, tipo não inferido). Falta a validação visual/interativa.
+
+## 6.1. Resultado da validação real (Godot 4.6.0 headless, GUT 9.6.1)
+
+Nesta sessão, pela primeira vez desde o início do projeto, o Godot foi
+de fato baixado e executado (headless, via linha de comando) para
+validar as 4 fases:
+
+- **Importação do projeto:** limpa, sem erros de script, após o
+  comportamento conhecido do Godot de às vezes precisar de duas
+  passadas ao escanear muitos `class_name` novos de uma vez (documentado
+  em `game/README.md`).
+- **Testes automatizados:** 70/70 passando, 134 asserts, 16 scripts de
+  teste, 0.4s — toda a lógica de simulação das Fases 1-3 testada e
+  verde.
+- **Cena principal em execução real:** ~12s headless com a simulação
+  rodando (múltiplos ticks de 1 mês, desastres com a chance aleatória
+  de 5% ativa, orçamento), zero erros ou warnings.
+- **Bug real encontrado e corrigido:** `scripts/camera.gd` tinha
+  `var delta := (event.position - ...)` dentro de um
+  `elif event is InputEventMouseMotion and _dragging:` — o Godot não
+  restringe o tipo de `event` quando o `is` vem combinado com `and`, e
+  o script simplesmente falhava ao carregar. Esse é exatamente o tipo
+  de erro que nenhuma revisão manual de código teria pego — só apareceu
+  ao rodar.
+- **GUT passou a ser vendorizado** em `game/addons/gut/` (MIT, v9.6.1) —
+  não precisa mais instalar nada manualmente para rodar os testes.
+- **Versão do motor:** `project.godot` atualizado de `"4.3"` para
+  `"4.6"` (a versão real usada na validação).
+
+**O que a validação headless não cobre** (precisa de um ambiente com
+tela/dispositivo, que esta sessão não tem): a experiência real de
+clicar/tocar na toolbar, o "feel" do pan/zoom da câmera, e qualquer
+coisa específica de um dispositivo móvel real (performance, gestos).
 
 ## 6. Riscos e mitigação
 
