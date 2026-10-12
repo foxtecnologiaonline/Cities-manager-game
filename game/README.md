@@ -13,8 +13,11 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 > do Godot instalado, então ainda **não foi aberto/executado** pelo Claude —
 > todo o GDScript abaixo foi escrito e revisado manualmente, sem rodar no
 > editor. A primeira verificação (abrir no editor, rodar a cena, confirmar
-> que o grid renderiza, cresce e responde aos controles) precisa ser feita
-> localmente antes de seguir para a Fase 4.
+> que o grid renderiza, cresce e responde aos controles) ainda não foi
+> feita. Com a Fase 4 (toolbar/UI em `Control`, `ButtonGroup`, sinais
+> ligados via `.tscn`) isso se torna mais urgente: essas são as APIs mais
+> fáceis de ter um erro sutil sem o editor para conferir. **Recomendo
+> fortemente validar tudo localmente agora**, antes de qualquer fase nova.
 
 ## O que já funciona
 
@@ -88,18 +91,52 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
   de desastres e jornal; saves v1 continuam carregando (campos novos
   usam valores padrão).
 
+**Fase 4 — polimento multiplataforma**
+- `scripts/toolbar.gd` — toolbar inferior com rolagem horizontal, um
+  botão por ferramenta (estilo rádio via `ButtonGroup`), construída em
+  runtime a partir de uma tabela de dados. Alvos de toque de 96×56px
+  (acima do mínimo recomendado de 44×44pt/48×48dp).
+- **Correção de um gap real:** antes, a cena só reagia a
+  `InputEventMouseButton`/`InputEventKey` — um toque real em touchscreen
+  gera `InputEventScreenTouch`/`InputEventScreenDrag`, então **construir
+  por toque não funcionava de fato em mobile**. Agora `scripts/main.gd`
+  trata os dois (mouse e toque) de forma unificada, distinguindo
+  toque/clique de arrasto pela distância percorrida
+  (`TAP_MOVE_THRESHOLD`), e converte posição de tela para tile via
+  `Viewport.canvas_transform` em vez de `get_global_mouse_position()`
+  (que não existe para toque puro).
+- Acessibilidade: paleta dos overlays de dados trocada de verde/vermelho
+  para azul/âmbar — verde/vermelho é a pior combinação possível para
+  daltonismo vermelho-verde (a forma mais comum).
+- `localization/strings.csv` — esqueleto de localização: a primeira
+  coluna (`keys`) é o próprio texto em pt-BR usado como chave de
+  tradução, e a coluna `en` traz a versão em inglês. Os botões da
+  toolbar já chamam `tr(label)`, então **funcionam em pt-BR imediatamente
+  sem nenhuma importação** (é o texto padrão quando não há tradução
+  carregada). Para habilitar o inglês: abra o projeto no Godot, selecione
+  `localization/strings.csv` no FileSystem (o importador de CSV gera os
+  `.translation` por idioma), depois adicione-os em Project Settings →
+  Localization → Translations. **Isso não pode ser feito sem o editor**,
+  por isso não foi feito aqui.
+- `scripts/tutorial_hint.gd` — painel de onboarding mínimo (uma
+  mensagem, um botão "Entendi"), não um tutorial multi-etapas.
+- **Decisão deliberada:** nenhuma otimização de performance (LOD de
+  simulação, pooling de nós) foi feita nesta fase. Otimizar sem medir é
+  especulação, e não há como medir sem abrir o projeto. Primeiro valide
+  e colete métricas reais; otimize depois, com dados.
+
 ### Controles da cena de demonstração
+
+A maior parte das ações agora passa pela toolbar inferior (clique ou
+toque num botão para selecionar a ferramenta, depois toque/clique no
+mapa para aplicá-la). O que não tem botão na toolbar continua em
+teclado, só para debug/demonstração:
 
 | Ação | Controle |
 |---|---|
-| Zonear Residencial | clique esquerdo |
-| Demolir (zona + edifício especial) | clique direito |
-| Zonear Residencial/Comercial/Industrial/Rua/Rodovia/Trilho/Metrô | teclas `1`–`7` (no tile sob o mouse) |
-| Colocar usina de energia / estação de água | `P` / `U` |
-| Colocar polícia / bombeiros / hospital / escola | `K` / `F` / `H` / `O` |
-| Colocar aeroporto / porto (exige marco de população) | `A` / `E` |
-| Criar ou remover água (terraformação) | `8` |
-| Subir / descer elevação | `9` / `0` |
+| Selecionar ferramenta (zonear, demolir, serviços, aeroporto/porto, terraformação) | toolbar inferior |
+| Aplicar a ferramenta selecionada no tile sob o cursor/dedo | toque ou clique esquerdo (sem arrastar) |
+| Demolir rápido (atalho de desktop) | clique direito |
 | Ligar/desligar ordenança (Patrulha/Reciclagem/Turismo/Educação) | `Ctrl` + `1`–`4` |
 | Ligar/desligar desastres aleatórios | `N` |
 | Disparar um desastre aleatório agora | `M` |
@@ -107,9 +144,9 @@ Projeto Godot 4.x (testado como 4.3+; a engine faz upgrade automático do
 | Salvar / Carregar | `F5` / `F9` |
 | Pan / Zoom da câmera | arrastar botão do meio ou toque / scroll ou pinça |
 
-> Isso é uma cena de prova de conceito, não a UI final — ferramentas de
-> construção com toolbar/touch dedicados entram na Fase 1 avançada /
-> Fase 4 (polimento mobile) do roadmap em `docs/GAME_SCOPE.md`.
+> Isso ainda é uma cena de prova de conceito, não a UI final de produção
+> (sem ícones, sem tema visual) — mas a interação (toolbar + tap, mouse e
+> touch tratados da mesma forma) já é a real, não um placeholder.
 
 ## Testes
 

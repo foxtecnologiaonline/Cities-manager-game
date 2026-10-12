@@ -116,9 +116,15 @@ Precedente útil: em 2008 a própria EA liberou o código do *SimCity* original 
 - [ ] **Pendente:** flag de "marco já anunciado" não é persistida no save — depois de carregar um save, um marco já atingido pode ser anunciado de novo no jornal (bug cosmético conhecido, não afeta a simulação).
 
 **Fase 4 — Polimento multiplataforma (contínuo)**
-- UI touch dedicada para mobile, testes em dispositivos reais.
-- Otimização de performance (LOD de simulação, pooling de nós).
-- Acessibilidade, localização (pt-BR/en), tutorial.
+- [x] UI touch dedicada: toolbar inferior com botões (estilo rádio, uma ferramenta ativa por vez), construída em runtime (`scripts/toolbar.gd`), com alvos de toque ≥96×56px.
+- [x] **Correção de um gap real de mobile:** a cena só reagia a `InputEventMouseButton`/`InputEventKey` — em touchscreen real isso não gera esses eventos (gera `InputEventScreenTouch`/`InputEventScreenDrag`), então tocar para construir **não funcionava**. Corrigido com detecção unificada de tap-vs-arrasto (mouse e touch) e conversão tela→grid independente de mouse (`Viewport.canvas_transform`).
+- [x] Acessibilidade: paleta dos overlays de dados trocada de verde/vermelho (a pior combinação possível para daltonismo vermelho-verde, a forma mais comum) para azul/âmbar.
+- [x] Localização: esqueleto real com `localization/strings.csv` (chaves = texto em pt-BR, com coluna `en`) e `tr()` nos botões da toolbar — pt-BR funciona imediatamente sem importação (é o texto-chave); inglês requer importar o CSV no Editor e registrá-lo em Project Settings → Localization (passo manual documentado no `game/README.md`, não pode ser feito sem abrir o Editor).
+- [x] Tutorial mínimo: painel de onboarding dispensável (`scripts/tutorial_hint.gd`), não um fluxo multi-etapas.
+- [ ] **Decisão deliberada, não pendência esquecida:** nenhuma otimização de performance (LOD de simulação, pooling de nós) foi feita. Otimizar sem medição é especulação — não há perfil de performance real (nunca foi aberto no Godot) nem dispositivo real testado. Fazer isso sem dados seria código especulativo não verificável.
+- [ ] **Pendente, bloqueado por ambiente:** testes em dispositivos reais — impossível neste container (sem Godot, sem dispositivo).
+- [ ] **Pendente:** textos dinâmicos do HUD (mês/caixa/demanda/jornal) ainda só em pt-BR — só os rótulos da toolbar têm o gancho de tradução por agora.
+- [ ] **Pendente:** validar no Godot Editor — depois de 4 fases de código nunca aberto no editor, esta é a validação mais importante e mais arriscada de todo o projeto (toolbar/UI usa APIs de `Control`/`ButtonGroup`/sinais de `.tscn` que são as mais fáceis de errar sem o editor).
 
 ## 6. Riscos e mitigação
 
