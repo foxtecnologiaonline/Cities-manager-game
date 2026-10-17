@@ -136,9 +136,22 @@ validar as 4 fases:
   comportamento conhecido do Godot de às vezes precisar de duas
   passadas ao escanear muitos `class_name` novos de uma vez (documentado
   em `game/README.md`).
-- **Testes automatizados:** 70/70 passando, 134 asserts, 16 scripts de
-  teste, 0.4s — toda a lógica de simulação das Fases 1-3 testada e
-  verde.
+- **Testes automatizados:** 79/79 passando, 146 asserts, 17 scripts de
+  teste (16 unitários em `tests/core/` + 1 de integração em
+  `tests/integration/`), <1s — toda a lógica de simulação das Fases 1-3
+  testada e verde.
+- **Testes de integração (`tests/integration/test_main_scene.gd`),
+  adicionados depois da primeira validação:** instanciam a cena real
+  (`Main.tscn`) e cobrem a camada que os testes unitários nunca tocavam
+  — exatamente onde o bug do `camera.gd` vivia. Confirmam que a conexão
+  de sinal da toolbar no `.tscn` funciona de ponta a ponta, que a tabela
+  `BuildTool` de `main.gd` e a tabela `TOOLS` de `toolbar.gd` estão
+  alinhadas, que a distinção toque-vs-arrasto funciona com eventos de
+  touch sintéticos reais, e que `_tile_at_screen_pos` converte
+  corretamente tela→mundo considerando a posição da câmera (um teste
+  inicial deu falso-negativo por assumir tela=mundo — corrigido no
+  teste, não no jogo, e a correção confirmou que a lógica do jogo já
+  estava certa).
 - **Cena principal em execução real:** ~12s headless com a simulação
   rodando (múltiplos ticks de 1 mês, desastres com a chance aleatória
   de 5% ativa, orçamento), zero erros ou warnings.

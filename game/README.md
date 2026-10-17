@@ -173,10 +173,10 @@ sem ele, o runner headless pode ficar parado depois do último teste.
 nesta sessão):**
 
 ```
-Scripts              16
-Tests                70
-Passing Tests        70
-Asserts             134
+Scripts              17
+Tests                79
+Passing Tests        79
+Asserts             146
 ---- All tests passed! ----
 ```
 
@@ -193,6 +193,31 @@ revisão manual de código o teria pego.
 Também foi confirmado que a cena principal roda de verdade: vários ticks
 de simulação (orçamento, desastres com a chance aleatória de 5% ativa,
 etc.) ao longo de ~12s headless, sem nenhum erro ou warning no log.
+
+### `tests/integration/` — a camada que faltava
+
+`tests/core/` nunca tocava `scripts/main.gd`, `scripts/toolbar.gd` ou o
+próprio `Main.tscn` — exatamente a camada onde o bug do `camera.gd`
+apareceu. `tests/integration/test_main_scene.gd` instancia a cena real
+(`load("res://scenes/Main.tscn").instantiate()`) e testa:
+
+- a conexão de sinal `tool_selected` no `.tscn` funciona de ponta a ponta
+  (aperta o botão "Comercial" de verdade, confirma que `main.gd` recebeu);
+- a tabela `BuildTool` (`main.gd`) e a tabela `TOOLS` (`toolbar.gd`) estão
+  de fato alinhadas (não só "deveriam estar", conforme o comentário
+  CONTRACT nos dois arquivos);
+- toque sem arrastar aplica a ferramenta; arrastar além do limiar não
+  aplica (a lógica de tap-vs-drag da Fase 4, com eventos de touch
+  sintéticos de verdade);
+- o botão de dispensar o hint de onboarding remove o painel.
+
+Ao escrever o primeiro desses testes, um erro de premissa apareceu nele
+mesmo (não no código do jogo): o teste assumia que posição de tela =
+posição de mundo, mas a `Camera2D` da cena fica em `(512, 512)`, não na
+origem. Corrigido convertendo a posição esperada pelo `canvas_transform`
+do viewport antes de simular o toque — e isso, junto de o teste passar
+depois da correção, confirma que `_tile_at_screen_pos` em `main.gd` está
+corretamente ciente da câmera (o motivo de ele existir).
 
 ## Build/export
 
